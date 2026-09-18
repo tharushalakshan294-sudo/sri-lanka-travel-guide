@@ -1,0 +1,1048 @@
+<!DOCTYPE html>
+<html lang="en" class="scroll-smooth">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Explore Sri Lanka - Vibe Travel Guide</title>
+
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+
+    <!-- Font Awesome Icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+
+    <!-- Leaflet CSS & JS -->
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+
+    <!-- Google Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&family=Playfair+Display:ital,wght@0,600;0,800;1,400&display=swap" rel="stylesheet">
+
+    <script>
+        tailwind.config = {
+            darkMode: 'class',
+            theme: {
+                extend: {
+                    colors: {
+                        tropical: {
+                            900: '#062312',
+                            800: '#0c381e',
+                            700: '#15522e',
+                            600: '#1e6f3e',
+                            500: '#278f50',
+                            100: '#e8f5ed',
+                        },
+                        amberGold: {
+                            400: '#f59e0b',
+                            500: '#d97706',
+                            600: '#b45309',
+                        },
+                        oceanTeal: {
+                            500: '#0d9488',
+                            600: '#0d7490',
+                        }
+                    },
+                    fontFamily: {
+                        sans: ['"Plus Jakarta Sans"', 'sans-serif'],
+                        serif: ['"Playfair Display"', 'serif'],
+                    }
+                }
+            }
+        }
+    </script>
+
+    <style>
+        /* Custom Scrollbar */
+        ::-webkit-scrollbar {
+            width: 8px;
+        }
+        ::-webkit-scrollbar-track {
+            background: #062312;
+        }
+        ::-webkit-scrollbar-thumb {
+            background: #278f50;
+            border-radius: 4px;
+        }
+
+        /* Glassmorphism Classes */
+        .glass-panel {
+            background: rgba(12, 56, 30, 0.75);
+            backdrop-filter: blur(12px);
+            -webkit-backdrop-filter: blur(12px);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+        }
+        .glass-panel-light {
+            background: rgba(255, 255, 255, 0.85);
+            backdrop-filter: blur(12px);
+            -webkit-backdrop-filter: blur(12px);
+            border: 1px solid rgba(255, 255, 255, 0.3);
+        }
+
+        /* Custom Leaflet Map Adjustments */
+        #map {
+            width: 100%;
+            height: 100%;
+            z-index: 10;
+            border-radius: 1rem;
+        }
+        .leaflet-popup-content-wrapper {
+            background: #0c381e !important;
+            color: #ffffff !important;
+            border: 1px solid #d97706;
+            border-radius: 12px;
+            padding: 4px;
+        }
+        .leaflet-popup-tip {
+            background: #0c381e !important;
+        }
+
+        /* Custom Marker Pulse Effect */
+        .custom-map-marker {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background: #d97706;
+            color: white;
+            border-radius: 50%;
+            border: 2px solid #ffffff;
+            box-shadow: 0 0 15px rgba(217, 119, 6, 0.6);
+            transition: all 0.3s ease;
+        }
+        .custom-map-marker:hover {
+            transform: scale(1.25);
+            background: #0d9488;
+        }
+
+        /* Toast Animation */
+        @keyframes slideIn {
+            from { transform: translateY(100%); opacity: 0; }
+            to { transform: translateY(0); opacity: 1; }
+        }
+        .toast-active {
+            animation: slideIn 0.3s forwards;
+        }
+    </style>
+</head>
+<body class="bg-slate-950 text-slate-100 font-sans min-h-screen flex flex-col selection:bg-amber-500 selection:text-black">
+
+    <!-- Navigation Bar -->
+    <header class="sticky top-0 z-50 glass-panel border-b border-emerald-900/50">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-20 flex items-center justify-between">
+            
+            <!-- Logo -->
+            <a href="#" class="flex items-center gap-3 group">
+                <div class="w-11 h-11 rounded-xl bg-gradient-to-tr from-amber-500 to-emerald-500 flex items-center justify-center text-slate-950 text-xl font-bold shadow-lg shadow-amber-500/20 group-hover:scale-105 transition-transform">
+                    🇱🇰
+                </div>
+                <div>
+                    <span class="font-serif text-2xl font-bold tracking-tight text-white block leading-none">Explore <span class="text-amber-400">Sri Lanka</span></span>
+                    <span class="text-xs text-emerald-400 font-medium tracking-widest uppercase">Vibe Travel Guide</span>
+                </div>
+            </a>
+
+            <!-- Desktop Links -->
+            <nav class="hidden md:flex items-center gap-8 text-sm font-semibold text-slate-300">
+                <a href="#map-section" class="hover:text-amber-400 transition-colors flex items-center gap-2"><i class="fa-solid me-1 fa-map-location-dot text-emerald-400"></i> Interactive Map</a>
+                <a href="#hotspots" class="hover:text-amber-400 transition-colors flex items-center gap-2"><i class="fa-solid me-1 fa-compass text-amber-400"></i> Hotspots</a>
+                <a href="#hotels" class="hover:text-amber-400 transition-colors flex items-center gap-2"><i class="fa-solid me-1 fa-hotel text-cyan-400"></i> Hotels & Stays</a>
+                <a href="#calculator" class="hover:text-amber-400 transition-colors flex items-center gap-2"><i class="fa-solid me-1 fa-calculator text-emerald-400"></i> Budget Calculator</a>
+            </nav>
+
+            <!-- Actions / Currency Selector -->
+            <div class="hidden md:flex items-center gap-4">
+                <div class="bg-emerald-950/80 border border-emerald-800/60 rounded-lg p-1 flex text-xs font-semibold">
+                    <button id="curr-usd" onclick="setCurrency('USD')" class="px-3 py-1.5 rounded-md bg-amber-500 text-slate-950 transition-all font-bold">USD ($)</button>
+                    <button id="curr-lkr" onclick="setCurrency('LKR')" class="px-3 py-1.5 rounded-md text-slate-300 hover:text-white transition-all">LKR (Rs)</button>
+                </div>
+                <a href="#hotels" class="bg-gradient-to-r from-amber-500 to-amber-600 text-slate-950 hover:from-amber-400 hover:to-amber-500 font-bold px-5 py-2.5 rounded-xl shadow-lg shadow-amber-500/20 transition-all hover:scale-105 text-sm flex items-center gap-2">
+                    <i class="fa-solid fa-paper-plane"></i> Plan Trip
+                </a>
+            </div>
+
+            <!-- Mobile Menu Toggle -->
+            <button id="mobile-menu-btn" class="md:hidden text-2xl text-slate-200 hover:text-amber-400 focus:outline-none">
+                <i class="fa-solid fa-bars"></i>
+            </button>
+        </div>
+
+        <!-- Mobile Drawer -->
+        <div id="mobile-menu" class="hidden md:hidden glass-panel border-t border-emerald-900 px-6 py-6 space-y-4">
+            <a href="#map-section" class="mobile-link block text-lg font-medium text-slate-200 hover:text-amber-400"><i class="fa-solid fa-map-location-dot me-2 text-emerald-400"></i> Interactive Map</a>
+            <a href="#hotspots" class="mobile-link block text-lg font-medium text-slate-200 hover:text-amber-400"><i class="fa-solid fa-compass me-2 text-amber-400"></i> Hotspots</a>
+            <a href="#hotels" class="mobile-link block text-lg font-medium text-slate-200 hover:text-amber-400"><i class="fa-solid fa-hotel me-2 text-cyan-400"></i> Hotels & Stays</a>
+            <a href="#calculator" class="mobile-link block text-lg font-medium text-slate-200 hover:text-amber-400"><i class="fa-solid fa-calculator me-2 text-emerald-400"></i> Budget Calculator</a>
+            <div class="pt-4 border-t border-emerald-800/60 flex items-center justify-between">
+                <span class="text-sm text-slate-400">Currency</span>
+                <div class="bg-emerald-950 border border-emerald-800 rounded-lg p-1 flex text-xs font-semibold">
+                    <button onclick="setCurrency('USD')" class="px-3 py-1 rounded-md bg-amber-500 text-slate-950 font-bold">USD</button>
+                    <button onclick="setCurrency('LKR')" class="px-3 py-1 rounded-md text-slate-300">LKR</button>
+                </div>
+            </div>
+        </div>
+    </header>
+
+    <!-- Hero Section -->
+    <section class="relative min-h-[85vh] flex items-center justify-center overflow-hidden py-16 px-4">
+        <!-- Background Overlay & Image -->
+        <div class="absolute inset-0 z-0">
+            <img src="https://images.unsplash.com/photo-1586861635167-e5223aadc9fe?auto=format&fit=crop&w=2000&q=80" alt="Sri Lanka Nine Arch Bridge" class="w-full h-full object-cover object-center brightness-50 scale-105 animate-pulse duration-[10000ms]" />
+            <div class="absolute inset-0 bg-gradient-to-t from-slate-950 via-slate-950/60 to-transparent"></div>
+            <div class="absolute inset-0 bg-gradient-to-r from-slate-950/80 via-transparent to-slate-950/80"></div>
+        </div>
+
+        <div class="relative z-10 max-w-5xl mx-auto text-center space-y-8">
+            <div class="inline-flex items-center gap-2 px-4 py-2 rounded-full glass-panel border border-amber-500/40 text-amber-300 text-xs sm:text-sm font-semibold tracking-wide uppercase shadow-lg">
+                <span class="w-2 h-2 rounded-full bg-emerald-400 animate-ping"></span>
+                The Pearl of the Indian Ocean Awaits
+            </div>
+
+            <h1 class="font-serif text-4xl sm:text-6xl lg:text-7xl font-extrabold tracking-tight text-white leading-tight">
+                Discover the Magic & <span class="bg-gradient-to-r from-amber-400 via-emerald-300 to-cyan-400 bg-clip-text text-transparent">Island Vibes</span> of Sri Lanka
+            </h1>
+
+            <p class="text-base sm:text-xl text-slate-300 max-w-3xl mx-auto font-light leading-relaxed">
+                From ancient rock fortresses in Sigiriya to mist-covered tea gardens in Ella and golden palm beaches in Mirissa. Your ultimate interactive travel companion.
+            </p>
+
+            <!-- Quick Search Bar -->
+            <div class="max-w-2xl mx-auto p-2 sm:p-3 glass-panel rounded-2xl border border-amber-500/30 shadow-2xl flex flex-col sm:flex-row gap-3">
+                <div class="relative flex-1 flex items-center">
+                    <i class="fa-solid fa-magnifying-glass absolute left-4 text-emerald-400"></i>
+                    <input type="text" id="hero-search" placeholder="Search places (e.g. Ella, Sigiriya, Galle)..." 
+                        class="w-full bg-slate-900/80 text-white placeholder-slate-400 pl-11 pr-4 py-3.5 rounded-xl border border-emerald-900/60 focus:outline-none focus:border-amber-400 text-sm">
+                </div>
+                <button onclick="handleHeroSearch()" class="bg-amber-500 hover:bg-amber-400 text-slate-950 font-bold px-8 py-3.5 rounded-xl shadow-lg transition-all flex items-center justify-center gap-2 text-sm">
+                    <i class="fa-solid fa-compass"></i> Explore Now
+                </button>
+            </div>
+
+            <!-- Stats / Highlights -->
+            <div class="grid grid-cols-2 sm:grid-cols-4 gap-4 pt-6 max-w-4xl mx-auto">
+                <div class="p-4 rounded-xl glass-panel border border-emerald-800/40 text-center">
+                    <p class="text-2xl sm:text-3xl font-extrabold text-amber-400 font-serif">8+</p>
+                    <p class="text-xs text-slate-400 uppercase tracking-wider font-semibold">UNESCO Sites</p>
+                </div>
+                <div class="p-4 rounded-xl glass-panel border border-emerald-800/40 text-center">
+                    <p class="text-2xl sm:text-3xl font-extrabold text-emerald-400 font-serif">1,300+ km</p>
+                    <p class="text-xs text-slate-400 uppercase tracking-wider font-semibold">Coastline</p>
+                </div>
+                <div class="p-4 rounded-xl glass-panel border border-emerald-800/40 text-center">
+                    <p class="text-2xl sm:text-3xl font-extrabold text-cyan-400 font-serif">26</p>
+                    <p class="text-xs text-slate-400 uppercase tracking-wider font-semibold">National Parks</p>
+                </div>
+                <div class="p-4 rounded-xl glass-panel border border-emerald-800/40 text-center">
+                    <p class="text-2xl sm:text-3xl font-extrabold text-amber-300 font-serif">100%</p>
+                    <p class="text-xs text-slate-400 uppercase tracking-wider font-semibold">Pure Warmth</p>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Interactive Map Section -->
+    <section id="map-section" class="py-16 px-4 sm:px-6 lg:px-8 max-w-7xl mx-auto w-full">
+        <div class="flex flex-col lg:flex-row items-start lg:items-end justify-between mb-8 gap-4">
+            <div>
+                <span class="text-amber-400 font-bold text-xs uppercase tracking-widest block mb-1">Live Map Explorer</span>
+                <h2 class="font-serif text-3xl sm:text-4xl font-bold text-white">Interactive Sri Lanka Route & Pins</h2>
+            </div>
+            <p class="text-slate-400 text-sm max-w-md">Click any custom pin on the island map below to discover location details, top vibes, and handpicked hotel stays.</p>
+        </div>
+
+        <div class="grid grid-cols-1 lg:grid-cols-3 gap-8 items-stretch">
+            <!-- Map Window -->
+            <div class="lg:col-span-2 h-[500px] sm:h-[600px] rounded-2xl overflow-hidden glass-panel border border-emerald-800/60 p-2 relative shadow-2xl">
+                <div id="map" class="rounded-xl"></div>
+            </div>
+
+            <!-- Map Quick Selector Panel -->
+            <div class="glass-panel border border-emerald-800/60 rounded-2xl p-6 flex flex-col justify-between space-y-6">
+                <div>
+                    <h3 class="text-xl font-serif font-bold text-amber-400 mb-2 flex items-center gap-2">
+                        <i class="fa-solid fa-map-pin text-emerald-400"></i> Top Hotspots
+                    </h3>
+                    <p class="text-xs text-slate-400 mb-4">Click to center the map on specific iconic destinations across Sri Lanka.</p>
+                    
+                    <div id="map-location-list" class="space-y-2 max-h-[380px] overflow-y-auto pr-1">
+                        <!-- Populated by JS -->
+                    </div>
+                </div>
+
+                <div class="bg-emerald-950/80 p-4 rounded-xl border border-emerald-800/50 flex items-center gap-3">
+                    <div class="w-10 h-10 rounded-full bg-amber-500/20 text-amber-400 flex items-center justify-center text-lg font-bold">
+                        <i class="fa-solid fa-lightbulb"></i>
+                    </div>
+                    <div class="text-xs text-slate-300">
+                        <span class="font-bold text-amber-300 block">Pro Travel Tip:</span>
+                        Take the iconic Ella to Kandy train ride through misty highlands for breathtaking valley views!
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Hotspots Explorer Section -->
+    <section id="hotspots" class="py-16 px-4 sm:px-6 lg:px-8 max-w-7xl mx-auto w-full">
+        <div class="text-center max-w-3xl mx-auto mb-12 space-y-3">
+            <span class="text-emerald-400 font-bold text-xs uppercase tracking-widest">Iconic Destinations</span>
+            <h2 class="font-serif text-3xl sm:text-5xl font-bold text-white">Island Hotspots & Vibe Guide</h2>
+            <p class="text-slate-400 text-sm sm:text-base">Explore the essence of Sri Lanka categorized by scenery, best visit seasons, and estimated transit costs.</p>
+            
+            <!-- Category Filter Buttons -->
+            <div class="flex flex-wrap items-center justify-center gap-2 pt-4" id="vibe-filters">
+                <button onclick="filterHotspots('all')" class="vibe-btn active px-4 py-2 rounded-full text-xs font-bold transition-all bg-amber-500 text-slate-950">All Vibes</button>
+                <button onclick="filterHotspots('Heritage & Culture')" class="vibe-btn px-4 py-2 rounded-full text-xs font-bold transition-all bg-slate-900 border border-emerald-800 text-slate-300 hover:border-amber-400">🏛️ Heritage</button>
+                <button onclick="filterHotspots('Nature & Hiking')" class="vibe-btn px-4 py-2 rounded-full text-xs font-bold transition-all bg-slate-900 border border-emerald-800 text-slate-300 hover:border-amber-400">⛰️ Nature</button>
+                <button onclick="filterHotspots('Surfing & Beach')" class="vibe-btn px-4 py-2 rounded-full text-xs font-bold transition-all bg-slate-900 border border-emerald-800 text-slate-300 hover:border-amber-400">🏖️ Beaches</button>
+                <button onclick="filterHotspots('Wildlife Safari')" class="vibe-btn px-4 py-2 rounded-full text-xs font-bold transition-all bg-slate-900 border border-emerald-800 text-slate-300 hover:border-amber-400">🐆 Wildlife</button>
+            </div>
+        </div>
+
+        <div id="hotspots-grid" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+            <!-- Dynamically populated hotspot cards -->
+        </div>
+    </section>
+
+    <!-- Hotel & Accommodation Directory -->
+    <section id="hotels" class="py-16 px-4 sm:px-6 lg:px-8 max-w-7xl mx-auto w-full">
+        <div class="glass-panel border border-emerald-800/60 rounded-3xl p-6 sm:p-10 relative overflow-hidden">
+            <!-- Header & Filters -->
+            <div class="flex flex-col lg:flex-row items-start lg:items-end justify-between mb-8 gap-6 border-b border-emerald-800/60 pb-8">
+                <div>
+                    <span class="text-cyan-400 font-bold text-xs uppercase tracking-widest block mb-1">Handpicked Stays</span>
+                    <h2 class="font-serif text-3xl sm:text-4xl font-bold text-white">Hotels & Eco Luxury Lodges</h2>
+                    <p class="text-slate-400 text-sm mt-1">Filter top rated accommodations with live prices in USD and LKR.</p>
+                </div>
+
+                <!-- Controls Container -->
+                <div class="flex flex-wrap items-center gap-3 w-full lg:w-auto">
+                    <!-- Location Filter -->
+                    <select id="hotel-location-filter" onchange="filterHotels()" class="bg-slate-900 border border-emerald-800 text-slate-200 text-xs rounded-xl px-3 py-2.5 focus:outline-none focus:border-amber-400">
+                        <option value="all">All Locations</option>
+                        <option value="Sigiriya">Sigiriya</option>
+                        <option value="Ella">Ella</option>
+                        <option value="Kandy">Kandy</option>
+                        <option value="Mirissa">Mirissa</option>
+                        <option value="Galle Fort">Galle Fort</option>
+                        <option value="Yala">Yala</option>
+                        <option value="Colombo">Colombo</option>
+                        <option value="Nuwara Eliya">Nuwara Eliya</option>
+                    </select>
+
+                    <!-- Category Filter -->
+                    <select id="hotel-category-filter" onchange="filterHotels()" class="bg-slate-900 border border-emerald-800 text-slate-200 text-xs rounded-xl px-3 py-2.5 focus:outline-none focus:border-amber-400">
+                        <option value="all">All Stay Types</option>
+                        <option value="Luxury">Luxury Resort</option>
+                        <option value="Boutique">Boutique Villa</option>
+                        <option value="Eco-Lodge">Eco-Lodge</option>
+                        <option value="Budget">Budget / Hostel</option>
+                    </select>
+
+                    <input type="text" id="hotel-search-input" onkeyup="filterHotels()" placeholder="Search hotel name..." class="bg-slate-900 border border-emerald-800 text-slate-200 text-xs rounded-xl px-3 py-2.5 focus:outline-none focus:border-amber-400 min-w-[160px]">
+                </div>
+            </div>
+
+            <!-- Hotels Cards Grid -->
+            <div id="hotels-grid" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                <!-- Dynamically populated hotel cards -->
+            </div>
+        </div>
+    </section>
+
+    <!-- Dynamic Trip Budget Calculator -->
+    <section id="calculator" class="py-16 px-4 sm:px-6 lg:px-8 max-w-7xl mx-auto w-full">
+        <div class="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
+            
+            <!-- Input Form Panel -->
+            <div class="lg:col-span-7 glass-panel border border-emerald-800/60 rounded-3xl p-6 sm:p-8 space-y-6">
+                <div>
+                    <span class="text-amber-400 font-bold text-xs uppercase tracking-widest block mb-1">Smart Planner</span>
+                    <h2 class="font-serif text-3xl font-bold text-white">Interactive Sri Lanka Trip Budget Calculator</h2>
+                    <p class="text-slate-400 text-xs sm:text-sm mt-1">Estimate daily & total travel costs based on stay comfort, meals, activities, and transport.</p>
+                </div>
+
+                <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                    <!-- Number of Days -->
+                    <div class="space-y-2">
+                        <label class="text-xs font-bold text-slate-300 uppercase tracking-wider">Duration (Days)</label>
+                        <div class="relative">
+                            <input type="number" id="calc-days" value="7" min="1" max="90" oninput="calculateBudget()" class="w-full bg-slate-900 border border-emerald-800 text-amber-400 font-bold px-4 py-3 rounded-xl focus:outline-none focus:border-amber-400 text-base">
+                            <i class="fa-solid fa-calendar-days absolute right-4 top-4 text-slate-500"></i>
+                        </div>
+                    </div>
+
+                    <!-- Number of Travelers -->
+                    <div class="space-y-2">
+                        <label class="text-xs font-bold text-slate-300 uppercase tracking-wider">Travelers</label>
+                        <div class="relative">
+                            <input type="number" id="calc-people" value="2" min="1" max="20" oninput="calculateBudget()" class="w-full bg-slate-900 border border-emerald-800 text-amber-400 font-bold px-4 py-3 rounded-xl focus:outline-none focus:border-amber-400 text-base">
+                            <i class="fa-solid fa-user-group absolute right-4 top-4 text-slate-500"></i>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Accommodation Tier -->
+                <div class="space-y-2">
+                    <label class="text-xs font-bold text-slate-300 uppercase tracking-wider">Accommodation Tier</label>
+                    <div class="grid grid-cols-3 gap-3">
+                        <button type="button" onclick="setStayTier('budget')" id="tier-budget" class="calc-stay-btn p-3 rounded-xl border border-emerald-800 bg-slate-900 text-left transition-all hover:border-amber-400">
+                            <p class="font-bold text-xs text-white">Backpacker</p>
+                            <p class="text-[10px] text-slate-400">$20 - $40 / day</p>
+                        </button>
+                        <button type="button" onclick="setStayTier('mid')" id="tier-mid" class="calc-stay-btn p-3 rounded-xl border-2 border-amber-500 bg-amber-500/10 text-left transition-all">
+                            <p class="font-bold text-xs text-amber-400">Mid-Range</p>
+                            <p class="text-[10px] text-slate-300">$60 - $120 / day</p>
+                        </button>
+                        <button type="button" onclick="setStayTier('luxury')" id="tier-luxury" class="calc-stay-btn p-3 rounded-xl border border-emerald-800 bg-slate-900 text-left transition-all hover:border-amber-400">
+                            <p class="font-bold text-xs text-white">Luxury Resort</p>
+                            <p class="text-[10px] text-slate-400">$200+ / day</p>
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Daily Add-ons Slider Inputs -->
+                <div class="space-y-4 pt-2">
+                    <!-- Meals -->
+                    <div>
+                        <div class="flex justify-between text-xs font-bold text-slate-300 mb-1">
+                            <span>Meals & Dining (Per Person / Day)</span>
+                            <span id="meal-cost-val" class="text-amber-400">$25</span>
+                        </div>
+                        <input type="range" id="calc-meals" min="10" max="100" step="5" value="25" oninput="calculateBudget()" class="w-full accent-amber-500 cursor-pointer">
+                    </div>
+
+                    <!-- Local Transport -->
+                    <div>
+                        <div class="flex justify-between text-xs font-bold text-slate-300 mb-1">
+                            <span>Transport (Tuk-Tuk, Train, Private Driver / Day)</span>
+                            <span id="transport-cost-val" class="text-emerald-400">$20</span>
+                        </div>
+                        <input type="range" id="calc-transport" min="5" max="80" step="5" value="20" oninput="calculateBudget()" class="w-full accent-emerald-500 cursor-pointer">
+                    </div>
+
+                    <!-- Entrance Fees & Excursions -->
+                    <div>
+                        <div class="flex justify-between text-xs font-bold text-slate-300 mb-1">
+                            <span>Excursions & Park Entry Tickets / Day</span>
+                            <span id="activity-cost-val" class="text-cyan-400">$20</span>
+                        </div>
+                        <input type="range" id="calc-activities" min="5" max="100" step="5" value="20" oninput="calculateBudget()" class="w-full accent-cyan-500 cursor-pointer">
+                    </div>
+                </div>
+            </div>
+
+            <!-- Total Breakdown Card -->
+            <div class="lg:col-span-5 glass-panel border border-amber-500/40 rounded-3xl p-6 sm:p-8 space-y-6 relative overflow-hidden bg-gradient-to-b from-emerald-950/80 to-slate-950">
+                <div class="absolute top-0 right-0 p-8 opacity-10 text-9xl text-amber-400 pointer-events-none">
+                    🇱🇰
+                </div>
+
+                <h3 class="font-serif text-2xl font-bold text-white border-b border-emerald-800/60 pb-4">Estimated Trip Cost</h3>
+
+                <div class="space-y-4">
+                    <div class="flex justify-between items-center text-sm">
+                        <span class="text-slate-400">Total Accommodation</span>
+                        <span id="summary-stay" class="font-bold text-white">$0</span>
+                    </div>
+                    <div class="flex justify-between items-center text-sm">
+                        <span class="text-slate-400">Total Food & Dining</span>
+                        <span id="summary-meals" class="font-bold text-white">$0</span>
+                    </div>
+                    <div class="flex justify-between items-center text-sm">
+                        <span class="text-slate-400">Total Transport</span>
+                        <span id="summary-transport" class="font-bold text-white">$0</span>
+                    </div>
+                    <div class="flex justify-between items-center text-sm">
+                        <span class="text-slate-400">Activities & Safaris</span>
+                        <span id="summary-activities" class="font-bold text-white">$0</span>
+                    </div>
+                </div>
+
+                <div class="pt-6 border-t border-amber-500/30 space-y-2">
+                    <div class="flex items-baseline justify-between">
+                        <span class="text-xs uppercase font-bold tracking-wider text-slate-400">Total Estimated Budget</span>
+                        <span id="summary-total-primary" class="text-3xl font-extrabold text-amber-400 font-serif">$0</span>
+                    </div>
+                    <p id="summary-total-secondary" class="text-right text-xs text-emerald-400 font-semibold">≈ LKR 0</p>
+                </div>
+
+                <button onclick="showToast('Trip itinerary & budget breakdown saved to your browser session!')" class="w-full bg-gradient-to-r from-emerald-600 to-emerald-500 hover:from-emerald-500 hover:to-emerald-400 text-white font-bold py-3.5 rounded-xl shadow-lg transition-all flex items-center justify-center gap-2 text-sm">
+                    <i class="fa-solid fa-bookmark"></i> Save Trip Summary
+                </button>
+            </div>
+        </div>
+    </section>
+
+    <!-- Footer -->
+    <footer class="mt-auto border-t border-emerald-900/60 glass-panel py-10 px-4 sm:px-6 lg:px-8">
+        <div class="max-w-7xl mx-auto flex flex-col sm:flex-row items-center justify-between gap-6 text-center sm:text-left">
+            <div>
+                <a href="#" class="font-serif text-xl font-bold text-white">Explore <span class="text-amber-400">Sri Lanka</span></a>
+                <p class="text-xs text-slate-400 mt-1">Authentic island vibes, live map pins, and verified accommodation links.</p>
+            </div>
+            
+            <div class="flex items-center gap-6 text-slate-400 text-sm">
+                <a href="#map-section" class="hover:text-amber-400 transition-colors">Map</a>
+                <a href="#hotspots" class="hover:text-amber-400 transition-colors">Hotspots</a>
+                <a href="#hotels" class="hover:text-amber-400 transition-colors">Hotels</a>
+                <a href="#calculator" class="hover:text-amber-400 transition-colors">Calculator</a>
+            </div>
+
+            <p class="text-xs text-slate-500">© 2026 Vibe Travel Guide • Sri Lanka Tourism</p>
+        </div>
+    </footer>
+
+    <!-- Toast Alert Container -->
+    <div id="toast" class="fixed bottom-6 right-6 z-50 transform translate-y-32 opacity-0 transition-all duration-300 pointer-events-none">
+        <div class="glass-panel border border-amber-400 text-white px-5 py-3.5 rounded-2xl shadow-2xl flex items-center gap-3">
+            <i class="fa-solid fa-circle-check text-amber-400 text-lg"></i>
+            <span id="toast-msg" class="text-sm font-semibold">Action completed successfully!</span>
+        </div>
+    </div>
+
+    <script>
+        // =========================================================
+        // DATA STRUCTURES: Sri Lanka Hotspots & Hotel Data
+        // =========================================================
+        const exchangeRateLKR = 310; // 1 USD = 310 LKR
+        let currentCurrency = 'USD';
+        let currentSelectedTier = 'mid';
+
+        const hotspotsData = [
+            {
+                id: 'sigiriya',
+                name: 'Sigiriya Lion Rock',
+                location: 'Sigiriya',
+                category: 'Heritage & Culture',
+                coords: [7.9570, 80.7603],
+                image: 'https://images.unsplash.com/photo-1588598056927-ac150f1620a5?auto=format&fit=crop&w=800&q=80',
+                rating: 4.9,
+                vibeBadge: 'Ancient Wonder 🏛️',
+                bestTime: 'Nov - Apr',
+                transportCostUSD: 15,
+                description: '5th-century fortress complex featuring ancient frescoes, water gardens, and panoramic jungle summit views.'
+            },
+            {
+                id: 'ella',
+                name: 'Ella Nine Arch & Gap',
+                location: 'Ella',
+                category: 'Nature & Hiking',
+                coords: [6.8667, 81.0466],
+                image: 'https://images.unsplash.com/photo-1546708973-b339540b5162?auto=format&fit=crop&w=800&q=80',
+                rating: 4.8,
+                vibeBadge: 'Mountain Magic ⛰️',
+                bestTime: 'Dec - Mar',
+                transportCostUSD: 10,
+                description: 'Picturesque mountain town renowned for the Nine Arch Railway Bridge, Little Adam’s Peak, and lush tea gardens.'
+            },
+            {
+                id: 'kandy',
+                name: 'Kandy Cultural Capital',
+                location: 'Kandy',
+                category: 'Heritage & Culture',
+                coords: [7.2906, 80.6337],
+                image: 'https://images.unsplash.com/photo-1580619305218-8423a7ef79b4?auto=format&fit=crop&w=800&q=80',
+                rating: 4.7,
+                vibeBadge: 'Sacred Heritage ⛩️',
+                bestTime: 'Jan - Apr',
+                transportCostUSD: 12,
+                description: 'Home to the sacred Temple of the Tooth Relic, serene Kandy Lake, and traditional Kandyan dance performances.'
+            },
+            {
+                id: 'mirissa',
+                name: 'Mirissa Palm Beach',
+                location: 'Mirissa',
+                category: 'Surfing & Beach',
+                coords: [5.9483, 80.4716],
+                image: 'https://images.unsplash.com/photo-1507525428034-b723cf961d3e?auto=format&fit=crop&w=800&q=80',
+                rating: 4.8,
+                vibeBadge: 'Tropical Sunset 🌴',
+                bestTime: 'Nov - Apr',
+                transportCostUSD: 8,
+                description: 'Famous Coconut Tree Hill, blue whale watching excursions, golden sands, and vibrant beach nightlife.'
+            },
+            {
+                id: 'galle',
+                name: 'Galle Fort & Lighthouse',
+                location: 'Galle Fort',
+                category: 'Heritage & Culture',
+                coords: [6.0300, 80.2170],
+                image: 'https://images.unsplash.com/photo-1566238401340-a19379bc031b?auto=format&fit=crop&w=800&q=80',
+                rating: 4.9,
+                vibeBadge: 'Colonial Charm 🏰',
+                bestTime: 'Dec - Apr',
+                transportCostUSD: 10,
+                description: 'UNESCO World Heritage Dutch colonial fort featuring cobblestone alleys, artisan boutiques, and rampart views.'
+            },
+            {
+                id: 'yala',
+                name: 'Yala National Park',
+                location: 'Yala',
+                category: 'Wildlife Safari',
+                coords: [6.3713, 81.5168],
+                image: 'https://images.unsplash.com/photo-1534567153574-2b12153a87f0?auto=format&fit=crop&w=800&q=80',
+                rating: 4.7,
+                vibeBadge: 'Wild Safari 🐆',
+                bestTime: 'Feb - Jul',
+                transportCostUSD: 25,
+                description: 'Highest leopard density in the world alongside wild elephants, sloth bears, and diverse bird species.'
+            },
+            {
+                id: 'colombo',
+                name: 'Colombo Oceanfront',
+                location: 'Colombo',
+                category: 'Heritage & Culture',
+                coords: [6.9271, 79.8612],
+                image: 'https://images.unsplash.com/photo-1578564498539-78f8705a109a?auto=format&fit=crop&w=800&q=80',
+                rating: 4.5,
+                vibeBadge: 'City & Harbor 🏙️',
+                bestTime: 'Year-Round',
+                transportCostUSD: 5,
+                description: 'Dynamic commercial capital featuring Lotus Tower, Galle Face Green sunset promenades, and rooftop dining.'
+            },
+            {
+                id: 'nuwaraeliya',
+                name: 'Nuwara Eliya Tea Hills',
+                location: 'Nuwara Eliya',
+                category: 'Nature & Hiking',
+                coords: [6.9497, 80.7891],
+                image: 'https://images.unsplash.com/photo-1540555700478-4be289fbecef?auto=format&fit=crop&w=800&q=80',
+                rating: 4.8,
+                vibeBadge: 'Little England ☕',
+                bestTime: 'Mar - May',
+                transportCostUSD: 15,
+                description: 'Cool mountain air, colonial-style bungalows, cascading waterfalls, and world-renowned Ceylon tea estates.'
+            }
+        ];
+
+        const hotelsData = [
+            {
+                name: 'Aliya Resort & Spa',
+                location: 'Sigiriya',
+                category: 'Luxury',
+                priceUSD: 140,
+                stars: 5,
+                image: 'https://images.unsplash.com/photo-1566073771259-6a8506099945?auto=format&fit=crop&w=600&q=80',
+                amenities: ['Pool', 'Free WiFi', 'Spa', 'Sigiriya View'],
+                bookingUrl: 'https://www.booking.com/searchresults.html?ss=Sigiriya'
+            },
+            {
+                name: '98 Acres Resort & Spa',
+                location: 'Ella',
+                category: 'Luxury',
+                priceUSD: 220,
+                stars: 5,
+                image: 'https://images.unsplash.com/photo-1582719478250-c89cae4dc85b?auto=format&fit=crop&w=600&q=80',
+                amenities: ['Helipad', 'Eco Luxury', 'Tea Estate', 'Spa'],
+                bookingUrl: 'https://www.booking.com/searchresults.html?ss=Ella'
+            },
+            {
+                name: 'Galle Fort Hotel',
+                location: 'Galle Fort',
+                category: 'Boutique',
+                priceUSD: 180,
+                stars: 5,
+                image: 'https://images.unsplash.com/photo-1542314831-068cd1dbfeeb?auto=format&fit=crop&w=600&q=80',
+                amenities: ['Pool', 'Heritage Building', 'Fine Dining'],
+                bookingUrl: 'https://www.booking.com/searchresults.html?ss=Galle+Fort'
+            },
+            {
+                name: 'Mandaram Eco Villa',
+                location: 'Nuwara Eliya',
+                category: 'Eco-Lodge',
+                priceUSD: 85,
+                stars: 4,
+                image: 'https://images.unsplash.com/photo-1510798831971-661eb04b3739?auto=format&fit=crop&w=600&q=80',
+                amenities: ['Fireplace', 'Mountain View', 'Organic Food'],
+                bookingUrl: 'https://www.booking.com/searchresults.html?ss=Nuwara+Eliya'
+            },
+            {
+                name: 'Cinnamon Wild Yala',
+                location: 'Yala',
+                category: 'Eco-Lodge',
+                priceUSD: 195,
+                stars: 4,
+                image: 'https://images.unsplash.com/photo-1520250497591-112f2f40a3f4?auto=format&fit=crop&w=600&q=80',
+                amenities: ['Jungle Pool', 'Safari Desk', 'Wildlife Near'],
+                bookingUrl: 'https://www.booking.com/searchresults.html?ss=Yala'
+            },
+            {
+                name: 'Mirissa Beach Hostel & Stays',
+                location: 'Mirissa',
+                category: 'Budget',
+                priceUSD: 25,
+                stars: 3,
+                image: 'https://images.unsplash.com/photo-1555854877-bab0e564b8d5?auto=format&fit=crop&w=600&q=80',
+                amenities: ['Beachfront', 'Free WiFi', 'Surfing Gear'],
+                bookingUrl: 'https://www.booking.com/searchresults.html?ss=Mirissa'
+            },
+            {
+                name: 'Earl’s Regency Hotel',
+                location: 'Kandy',
+                category: 'Luxury',
+                priceUSD: 110,
+                stars: 5,
+                image: 'https://images.unsplash.com/photo-1571896349842-33c89424de2d?auto=format&fit=crop&w=600&q=80',
+                amenities: ['Riverside', 'Pool', 'Ayurvedic Spa'],
+                bookingUrl: 'https://www.booking.com/searchresults.html?ss=Kandy'
+            },
+            {
+                name: 'Marino Beach Colombo',
+                location: 'Colombo',
+                category: 'Luxury',
+                priceUSD: 95,
+                stars: 4,
+                image: 'https://images.unsplash.com/photo-1566073771259-6a8506099945?auto=format&fit=crop&w=600&q=80',
+                amenities: ['Rooftop Infinity Pool', 'Ocean View', 'Gym'],
+                bookingUrl: 'https://www.booking.com/searchresults.html?ss=Colombo'
+            }
+        ];
+
+        // =========================================================
+        // MAP INITIALIZATION (Leaflet.js)
+        // =========================================================
+        let map;
+        let mapMarkers = [];
+
+        function initMap() {
+            map = L.map('map').setView([7.8731, 80.7718], 8); // Centered on Sri Lanka
+
+            // Dark Matter / Tropical Tile Layer
+            L.tileLayer('https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png', {
+                attribution: '&copy; OpenStreetMap contributors &copy; CARTO',
+                subdomains: 'abcd',
+                maxZoom: 19
+            }).addTo(map);
+
+            renderMapPins(hotspotsData);
+            renderMapSideList(hotspotsData);
+        }
+
+        function renderMapPins(spots) {
+            // Clear existing markers
+            mapMarkers.forEach(m => map.removeLayer(m));
+            mapMarkers = [];
+
+            spots.forEach(spot => {
+                // Custom DivIcon marker
+                const customIcon = L.divIcon({
+                    className: 'custom-map-marker-container',
+                    html: `<div class="custom-map-marker w-8 h-8 text-xs font-bold"><i class="fa-solid fa-location-dot"></i></div>`,
+                    iconSize: [32, 32],
+                    iconAnchor: [16, 32]
+                });
+
+                const marker = L.marker(spot.coords, { icon: customIcon }).addTo(map);
+
+                // Popup Content
+                const popupHTML = `
+                    <div class="w-64 p-1">
+                        <img src="${spot.image}" class="w-full h-28 object-cover rounded-lg mb-2">
+                        <span class="text-[10px] bg-amber-500/20 text-amber-300 font-bold px-2 py-0.5 rounded-full uppercase">${spot.vibeBadge}</span>
+                        <h4 class="font-bold text-sm text-white mt-1">${spot.name}</h4>
+                        <p class="text-xs text-slate-300 mt-1 line-clamp-2">${spot.description}</p>
+                        <div class="mt-3 pt-2 border-t border-emerald-800/60 flex items-center justify-between">
+                            <span class="text-xs font-bold text-amber-400"><i class="fa-solid fa-star me-1"></i>${spot.rating}</span>
+                            <button onclick="zoomToSpot('${spot.id}')" class="text-xs text-cyan-400 font-bold hover:underline">Explore Vibe</button>
+                        </div>
+                    </div>
+                `;
+
+                marker.bindPopup(popupHTML);
+                mapMarkers.push(marker);
+            });
+        }
+
+        function renderMapSideList(spots) {
+            const listContainer = document.getElementById('map-location-list');
+            listContainer.innerHTML = spots.map(spot => `
+                <div onclick="focusMapLocation('${spot.id}')" class="p-3 rounded-xl bg-slate-900/80 border border-emerald-900/60 hover:border-amber-400 cursor-pointer transition-all flex items-center justify-between group">
+                    <div class="flex items-center gap-3">
+                        <img src="${spot.image}" class="w-10 h-10 rounded-lg object-cover">
+                        <div>
+                            <p class="font-bold text-xs text-white group-hover:text-amber-400 transition-colors">${spot.name}</p>
+                            <span class="text-[10px] text-slate-400">${spot.location}</span>
+                        </div>
+                    </div>
+                    <i class="fa-solid fa-chevron-right text-xs text-slate-500 group-hover:text-amber-400"></i>
+                </div>
+            `).join('');
+        }
+
+        function focusMapLocation(id) {
+            const spot = hotspotsData.find(s => s.id === id);
+            if (spot && map) {
+                map.flyTo(spot.coords, 11, { duration: 1.5 });
+            }
+        }
+
+        function zoomToSpot(id) {
+            focusMapLocation(id);
+            document.getElementById('hotspots').scrollIntoView({ behavior: 'smooth' });
+        }
+
+        // =========================================================
+        // HOTSPOTS RENDER & FILTERING
+        // =========================================================
+        function renderHotspots(spots) {
+            const grid = document.getElementById('hotspots-grid');
+            grid.innerHTML = spots.map(spot => {
+                const transportCost = currentCurrency === 'USD' 
+                    ? `$${spot.transportCostUSD}` 
+                    : `Rs ${(spot.transportCostUSD * exchangeRateLKR).toLocaleString()}`;
+
+                return `
+                    <div class="glass-panel border border-emerald-800/60 rounded-2xl overflow-hidden hover:border-amber-400/60 transition-all duration-300 hover:-translate-y-1.5 flex flex-col justify-between group shadow-xl">
+                        <div>
+                            <div class="relative h-52 overflow-hidden">
+                                <img src="${spot.image}" alt="${spot.name}" class="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500">
+                                <div class="absolute inset-0 bg-gradient-to-t from-slate-950 via-transparent to-transparent"></div>
+                                
+                                <span class="absolute top-3 left-3 bg-slate-950/80 border border-emerald-800 text-amber-300 text-xs font-bold px-3 py-1 rounded-full backdrop-blur-md">
+                                    ${spot.vibeBadge}
+                                </span>
+
+                                <span class="absolute bottom-3 right-3 bg-emerald-950/90 text-emerald-300 text-xs font-bold px-2.5 py-1 rounded-lg border border-emerald-700">
+                                    <i class="fa-solid fa-star text-amber-400 me-1"></i>${spot.rating}
+                                </span>
+                            </div>
+
+                            <div class="p-5 space-y-3">
+                                <h3 class="font-serif text-xl font-bold text-white group-hover:text-amber-400 transition-colors">${spot.name}</h3>
+                                <p class="text-xs text-slate-300 leading-relaxed">${spot.description}</p>
+                            </div>
+                        </div>
+
+                        <div class="px-5 pb-5 pt-2 border-t border-emerald-900/50 flex items-center justify-between text-xs text-slate-400">
+                            <div>
+                                <span class="block text-[10px] text-slate-500 uppercase font-bold">Best Time</span>
+                                <span class="font-semibold text-slate-200"><i class="fa-solid fa-sun text-amber-400 me-1"></i>${spot.bestTime}</span>
+                            </div>
+                            <div class="text-right">
+                                <span class="block text-[10px] text-slate-500 uppercase font-bold">Avg Transit</span>
+                                <span class="font-semibold text-emerald-400"><i class="fa-solid fa-van-shuttle me-1"></i>${transportCost}</span>
+                            </div>
+                        </div>
+                    </div>
+                `;
+            }).join('');
+        }
+
+        function filterHotspots(category) {
+            // Update filter buttons visual state
+            document.querySelectorAll('.vibe-btn').forEach(btn => {
+                btn.classList.remove('bg-amber-500', 'text-slate-950');
+                btn.classList.add('bg-slate-900', 'text-slate-300');
+            });
+
+            event.target.classList.remove('bg-slate-900', 'text-slate-300');
+            event.target.classList.add('bg-amber-500', 'text-slate-950');
+
+            if (category === 'all') {
+                renderHotspots(hotspotsData);
+            } else {
+                const filtered = hotspotsData.filter(s => s.category === category);
+                renderHotspots(filtered);
+            }
+        }
+
+        // =========================================================
+        // HOTELS DIRECTORY & RENDER
+        // =========================================================
+        function renderHotels(hotels) {
+            const grid = document.getElementById('hotels-grid');
+            if (hotels.length === 0) {
+                grid.innerHTML = `<div class="col-span-full text-center py-12 text-slate-400">No hotels matched your filter criteria.</div>`;
+                return;
+            }
+
+            grid.innerHTML = hotels.map(hotel => {
+                const priceFormatted = currentCurrency === 'USD' 
+                    ? `$${hotel.priceUSD}` 
+                    : `Rs ${(hotel.priceUSD * exchangeRateLKR).toLocaleString()}`;
+
+                const starIcons = '★'.repeat(hotel.stars);
+
+                return `
+                    <div class="bg-slate-900/90 border border-emerald-900/70 rounded-2xl p-4 flex flex-col justify-between space-y-4 hover:border-amber-400/50 transition-all">
+                        <div class="space-y-3">
+                            <div class="relative h-40 rounded-xl overflow-hidden">
+                                <img src="${hotel.image}" alt="${hotel.name}" class="w-full h-full object-cover">
+                                <span class="absolute top-2 right-2 bg-amber-500 text-slate-950 text-[10px] font-extrabold px-2 py-0.5 rounded uppercase">
+                                    ${hotel.category}
+                                </span>
+                            </div>
+
+                            <div class="flex items-start justify-between">
+                                <div>
+                                    <h4 class="font-bold text-base text-white">${hotel.name}</h4>
+                                    <p class="text-xs text-slate-400"><i class="fa-solid fa-location-dot text-emerald-400 me-1"></i>${hotel.location}</p>
+                                </div>
+                                <span class="text-xs text-amber-400">${starIcons}</span>
+                            </div>
+
+                            <div class="flex flex-wrap gap-1.5 pt-1">
+                                ${hotel.amenities.map(a => `<span class="bg-emerald-950 text-emerald-300 text-[10px] font-semibold px-2 py-0.5 rounded border border-emerald-800">${a}</span>`).join('')}
+                            </div>
+                        </div>
+
+                        <div class="pt-3 border-t border-emerald-900/60 flex items-center justify-between">
+                            <div>
+                                <span class="text-[10px] text-slate-500 uppercase block font-bold">Per Night</span>
+                                <span class="text-lg font-extrabold text-amber-400 font-serif">${priceFormatted}</span>
+                            </div>
+                            <a href="${hotel.bookingUrl}" target="_blank" class="bg-emerald-700 hover:bg-emerald-600 text-white font-bold px-4 py-2 rounded-xl text-xs transition-all flex items-center gap-1">
+                                View Deal <i class="fa-solid fa-arrow-up-right-from-square text-[10px]"></i>
+                            </a>
+                        </div>
+                    </div>
+                `;
+            }).join('');
+        }
+
+        function filterHotels() {
+            const locationVal = document.getElementById('hotel-location-filter').value;
+            const categoryVal = document.getElementById('hotel-category-filter').value;
+            const searchVal = document.getElementById('hotel-search-input').value.toLowerCase();
+
+            let filtered = hotelsData.filter(h => {
+                const matchLoc = locationVal === 'all' || h.location === locationVal;
+                const matchCat = categoryVal === 'all' || h.category === categoryVal;
+                const matchSearch = h.name.toLowerCase().includes(searchVal) || h.location.toLowerCase().includes(searchVal);
+                return matchLoc && matchCat && matchSearch;
+            });
+
+            renderHotels(filtered);
+        }
+
+        // =========================================================
+        // TRIP BUDGET CALCULATOR LOGIC
+        // =========================================================
+        function setStayTier(tier) {
+            currentSelectedTier = tier;
+            document.querySelectorAll('.calc-stay-btn').forEach(b => {
+                b.classList.remove('border-2', 'border-amber-500', 'bg-amber-500/10');
+                b.classList.add('border-emerald-800', 'bg-slate-900');
+            });
+
+            const activeBtn = document.getElementById(`tier-${tier}`);
+            activeBtn.classList.remove('border-emerald-800', 'bg-slate-900');
+            activeBtn.classList.add('border-2', 'border-amber-500', 'bg-amber-500/10');
+
+            calculateBudget();
+        }
+
+        function calculateBudget() {
+            const days = parseInt(document.getElementById('calc-days').value) || 1;
+            const people = parseInt(document.getElementById('calc-people').value) || 1;
+
+            const mealCostPerPerson = parseInt(document.getElementById('calc-meals').value);
+            const transportCostDaily = parseInt(document.getElementById('calc-transport').value);
+            const activityCostPerPerson = parseInt(document.getElementById('calc-activities').value);
+
+            // Update UI Labels
+            document.getElementById('meal-cost-val').innerText = `$${mealCostPerPerson}`;
+            document.getElementById('transport-cost-val').innerText = `$${transportCostDaily}`;
+            document.getElementById('activity-cost-val').innerText = `$${activityCostPerPerson}`;
+
+            // Stay Tier Rates (Per Night USD)
+            let nightRate = 30;
+            if (currentSelectedTier === 'mid') nightRate = 90;
+            if (currentSelectedTier === 'luxury') nightRate = 250;
+
+            const totalStay = nightRate * days * Math.ceil(people / 2); // Assuming twin sharing rooms
+            const totalMeals = mealCostPerPerson * people * days;
+            const totalTransport = transportCostDaily * days;
+            const totalActivities = activityCostPerPerson * people * days;
+
+            const grandTotalUSD = totalStay + totalMeals + totalTransport + totalActivities;
+            const grandTotalLKR = grandTotalUSD * exchangeRateLKR;
+
+            // Summary UI Updates
+            document.getElementById('summary-stay').innerText = `$${totalStay.toLocaleString()}`;
+            document.getElementById('summary-meals').innerText = `$${totalMeals.toLocaleString()}`;
+            document.getElementById('summary-transport').innerText = `$${totalTransport.toLocaleString()}`;
+            document.getElementById('summary-activities').innerText = `$${totalActivities.toLocaleString()}`;
+
+            if (currentCurrency === 'USD') {
+                document.getElementById('summary-total-primary').innerText = `$${grandTotalUSD.toLocaleString()}`;
+                document.getElementById('summary-total-secondary').innerText = `≈ LKR ${grandTotalLKR.toLocaleString()}`;
+            } else {
+                document.getElementById('summary-total-primary').innerText = `LKR ${grandTotalLKR.toLocaleString()}`;
+                document.getElementById('summary-total-secondary').innerText = `≈ $${grandTotalUSD.toLocaleString()} USD`;
+            }
+        }
+
+        // =========================================================
+        // GLOBAL CONTROLS & UTILITIES
+        // =========================================================
+        function setCurrency(curr) {
+            currentCurrency = curr;
+
+            const usdBtn = document.getElementById('curr-usd');
+            const lkrBtn = document.getElementById('curr-lkr');
+
+            if (curr === 'USD') {
+                usdBtn.className = "px-3 py-1.5 rounded-md bg-amber-500 text-slate-950 font-bold transition-all";
+                lkrBtn.className = "px-3 py-1.5 rounded-md text-slate-300 hover:text-white transition-all";
+            } else {
+                lkrBtn.className = "px-3 py-1.5 rounded-md bg-amber-500 text-slate-950 font-bold transition-all";
+                usdBtn.className = "px-3 py-1.5 rounded-md text-slate-300 hover:text-white transition-all";
+            }
+
+            renderHotspots(hotspotsData);
+            filterHotels();
+            calculateBudget();
+        }
+
+        function handleHeroSearch() {
+            const query = document.getElementById('hero-search').value.toLowerCase().trim();
+            if (!query) return;
+
+            const foundSpot = hotspotsData.find(s => s.name.toLowerCase().includes(query) || s.location.toLowerCase().includes(query));
+            if (foundSpot) {
+                zoomToSpot(foundSpot.id);
+                showToast(`Found destination: ${foundSpot.name}`);
+            } else {
+                showToast(`No exact match found. Scrolling to hotspot guide.`);
+                document.getElementById('hotspots').scrollIntoView({ behavior: 'smooth' });
+            }
+        }
+
+        function showToast(message) {
+            const toast = document.getElementById('toast');
+            document.getElementById('toast-msg').innerText = message;
+            toast.classList.remove('translate-y-32', 'opacity-0');
+            toast.classList.add('toast-active');
+
+            setTimeout(() => {
+                toast.classList.add('translate-y-32', 'opacity-0');
+                toast.classList.remove('toast-active');
+            }, 3000);
+        }
+
+        // =========================================================
+        // INITIALIZATION ON DOM LOAD
+        // =========================================================
+        window.onload = function() {
+            initMap();
+            renderHotspots(hotspotsData);
+            renderHotels(hotelsData);
+            calculateBudget();
+
+            // Mobile menu toggle
+            document.getElementById('mobile-menu-btn').addEventListener('click', () => {
+                const menu = document.getElementById('mobile-menu');
+                menu.classList.toggle('hidden');
+            });
+
+            document.querySelectorAll('.mobile-link').forEach(link => {
+                link.addEventListener('click', () => {
+                    document.getElementById('mobile-menu').classList.add('hidden');
+                });
+            });
+        };
+    </script>
+</body>
+</html>
